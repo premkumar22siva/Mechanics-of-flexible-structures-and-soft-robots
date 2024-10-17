@@ -1,7 +1,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-% Gradient of Elastic Bending Energies
+# Helper Function
+
+def crossMat(a):
+    """
+    Returns the cross product matrix of vector 'a'.
+
+    Parameters:
+    a : np.ndarray
+        A 3-element array representing a vector.
+
+    Returns:
+    A : np.ndarray
+        The cross product matrix corresponding to vector 'a'.
+    """
+    A = np.array([[0, -a[2], a[1]],
+                  [a[2], 0, -a[0]],
+                  [-a[1], a[0], 0]])
+
+    return A
+######################################
+
+# Gradient of Elastic Bending Energies
 
 def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -78,7 +99,7 @@ def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
 
     return dF
 
-% Hessian of Elastic Bending Energies
+# Hessian of Elastic Bending Energies
 
 def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -198,3 +219,363 @@ def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     dJ += 1.0 / l_k * dkappa * EI * DDkappa1
 
     return dJ
+
+# Calculate Bending Force
+
+def getFb(q, EI, deltaL):
+    """
+    Compute the bending force and Jacobian of the bending force.
+
+    Parameters:
+    q : np.ndarray
+        A vector of size 6 containing the coordinates [x_{k-1}, y_{k-1}, x_k, y_k, x_{k+1}, y_{k+1}].
+    EI : float
+        The bending stiffness.
+    deltaL : float
+        The Voronoi length.
+
+    Returns:
+    Fb : np.ndarray
+        Bending force (vector of size 6).
+    Jb : np.ndarray
+        Jacobian of the bending force (6x6 matrix).
+    """
+
+    # Initialize bending force as a zero vector of size 6
+    Fb = np.zeros(6)
+
+    # Extract coordinates from q
+    xkm1, ykm1, xk, yk, xkp1, ykp1 = q
+
+    # Compute the gradient of bending energy
+    gradEnergy = gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, 0, deltaL, EI)
+
+    # Update bending force
+    Fb[0:6] = Fb[0:6] - gradEnergy
+
+    # Initialize Jacobian of bending force as a 6x6 zero matrix
+    Jb = np.zeros((6, 6))
+
+    # Compute the Hessian of bending energy
+    hessEnergy = hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, 0, deltaL, EI)
+
+    # Update Jacobian matrix
+    Jb[0:6, 0:6] = Jb[0:6, 0:6] - hessEnergy
+
+    return Fb, Jb
+
+# Gradient of Elastic Stretching Energies
+
+def gradEs(xk, yk, xkp1, ykp1, l_k, EA):
+    """
+    Calculate the gradient of the stretching energy with respect to the coordinates.
+
+    Args:
+    - xk (float): x coordinate of the current point
+    - yk (float): y coordinate of the current point
+    - xkp1 (float): x coordinate of the next point
+    - ykp1 (float): y coordinate of the next point
+    - l_k (float): reference length
+    - EA (float): elastic modulus
+
+    Returns:
+    - F (np.array): Gradient array
+    """
+    F = np.zeros(4)
+    F[0] = -(1.0 - np.sqrt((xkp1 - xk)**2.0 + (ykp1 - yk)**2.0) / l_k) * ((xkp1 - xk)**2.0 + (ykp1 - yk)**2.0)**(-0.5) / l_k * (-2.0 * xkp1 + 2.0 * xk)
+    F[1] = -(0.1e1 - np.sqrt((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k) * ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1) / l_k * (-0.2e1 * ykp1 + 0.2e1 * yk)
+    F[2] = -(0.1e1 - np.sqrt((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k) * ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1) / l_k * (0.2e1 * xkp1 - 0.2e1 * xk)
+    F[3] = -(0.1e1 - np.sqrt((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k) * ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1) / l_k * (0.2e1 * ykp1 - 0.2e1 * yk)
+
+    F = 0.5 * EA * l_k * F  # Scale by EA and l_k
+
+    return F
+#######################################
+
+# Hessian of Elastic Stretching Energies
+
+def hessEs(xk, yk, xkp1, ykp1, l_k, EA):
+    """
+    This function returns the 4x4 Hessian of the stretching energy E_k^s with
+    respect to x_k, y_k, x_{k+1}, and y_{k+1}.
+    """
+    J = np.zeros((4, 4))  # Initialize the Hessian matrix
+    J11 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (-2 * xkp1 + 2 * xk) ** 2) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * ((-2 * xkp1 + 2 * xk) ** 2) / 0.2e1 - 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+    J12 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (-2 * ykp1 + 2 * yk) * (-2 * xkp1 + 2 * xk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (-2 * xkp1 + 2 * xk) * (-2 * ykp1 + 2 * yk) / 0.2e1
+    J13 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * xkp1 - 2 * xk) * (-2 * xkp1 + 2 * xk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (-2 * xkp1 + 2 * xk) * (2 * xkp1 - 2 * xk) / 0.2e1 + 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+    J14 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * ykp1 - 2 * yk) * (-2 * xkp1 + 2 * xk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (-2 * xkp1 + 2 * xk) * (2 * ykp1 - 2 * yk) / 0.2e1
+    J22 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (-2 * ykp1 + 2 * yk) ** 2) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * ((-2 * ykp1 + 2 * yk) ** 2) / 0.2e1 - 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+    J23 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * xkp1 - 2 * xk) * (-2 * ykp1 + 2 * yk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (-2 * ykp1 + 2 * yk) * (2 * xkp1 - 2 * xk) / 0.2e1
+    J24 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * ykp1 - 2 * yk) * (-2 * ykp1 + 2 * yk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (-2 * ykp1 + 2 * yk) * (2 * ykp1 - 2 * yk) / 0.2e1 + 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+    J33 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * xkp1 - 2 * xk) ** 2) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * ((2 * xkp1 - 2 * xk) ** 2) / 0.2e1 - 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+    J34 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * ykp1 - 2 * yk) * (2 * xkp1 - 2 * xk)) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * (2 * xkp1 - 2 * xk) * (2 * ykp1 - 2 * yk) / 0.2e1
+    J44 = (1 / ((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) / l_k ** 2 * (2 * ykp1 - 2 * yk) ** 2) / 0.2e1 + (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.3e1 / 0.2e1)) / l_k * ((2 * ykp1 - 2 * yk) ** 2) / 0.2e1 - 0.2e1 * (0.1e1 - np.sqrt(((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2)) / l_k) * (((xkp1 - xk) ** 2 + (ykp1 - yk) ** 2) ** (-0.1e1 / 0.2e1)) / l_k
+
+    J = np.array([[J11, J12, J13, J14],
+                   [J12, J22, J23, J24],
+                   [J13, J23, J33, J34],
+                   [J14, J24, J34, J44]])
+
+    J *= 0.5 * EA * l_k
+
+    return J
+######################################
+
+# Calculate Stretching Force
+
+def getFs(q, EA, deltaL):
+    Fs = np.zeros_like(q)  # force
+    Js = np.zeros((len(q), len(q)))  # jacobian
+
+    # force due to Es^1
+    xkm1 = q[0]
+    ykm1 = q[1]
+    xk = q[2]
+    yk = q[3]
+    gradEnergy = gradEs(xkm1, ykm1, xk, yk, deltaL, EA)  # gradEs returns the gradient of (axial stretch)^2
+    Fs[0:4] -= gradEnergy
+
+    # Jacobian due to Es^1
+    hessEnergy = hessEs(xkm1, ykm1, xk, yk, deltaL, EA)  # hessEs returns the hessian of (axial stretch)^2
+    Js[0:4, 0:4] -= hessEnergy
+
+    # force due to Es^2
+    xkm1 = q[2]
+    ykm1 = q[3]
+    xk = q[4]
+    yk = q[5]
+    gradEnergy = gradEs(xkm1, ykm1, xk, yk, deltaL, EA)  # gradEs returns the gradient of (axial stretch)^2
+    Fs[2:6] -= gradEnergy
+
+    # Jacobian due to Es^2
+    hessEnergy = hessEs(xkm1, ykm1, xk, yk, deltaL, EA)  # hessEs returns the hessian of (axial stretch)^2
+    Js[2:6, 2:6] -= hessEnergy
+
+    return Fs, Js
+####################################
+
+EA = 3.1416e+03
+deltaL = 0.05
+xk = 0.0062
+yk = -0.0420
+xkp1 = 0.0500
+ykp1 = -0.0661
+gradEnergy = gradEs(xk, yk, xkp1, ykp1, deltaL, EA)
+hessEnergy = hessEs(xk, yk, xkp1, ykp1, deltaL, EA)
+print(gradEnergy)
+print(hessEnergy)
+####################################
+
+# OBJECTIVE FUNCTION (NEWTON-RAPHSON SCHEME)
+
+def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
+           m, mMat,  # inertia
+           EI, EA,   # elastic stiffness
+           W, C,     # external force
+           deltaL):
+
+    q_new = q_guess.copy()
+
+    # Newton-Raphson scheme
+    iter_count = 0  # number of iterations
+    error = tol * 10  # norm of function value (initialized to a value higher than tolerance)
+    flag = 1  # Start with a 'good' simulation (flag=1 means no error)
+
+    while error > tol:
+        # Get elastic forces
+        Fb, Jb = getFb(q_new, EI, deltaL)
+        Fs, Js = getFs(q_new, EA, deltaL)
+
+        # Viscous force
+        Fv = -C @ (q_new - q_old) / dt
+        Jv = -C / dt
+
+        # Equation of motion
+        f = m * (q_new - q_old) / dt**2 - m * u_old / dt - (Fb + Fs + W + Fv)
+
+        # Manipulate the Jacobians
+        J = mMat / dt**2 - (Jb + Js + Jv)
+
+        # Newton's update
+        q_new = q_new - np.linalg.solve(J, f)
+
+        # Get the norm
+        error = np.linalg.norm(f)
+
+        # Update iteration number
+        iter_count += 1
+        print(f'Iter={iter_count-1}, error={error:.6e}')
+
+        if iter_count > maximum_iter:
+            flag = -1  # return with an error signal
+            return q_new, flag
+
+    return q_new, flag
+####################################
+
+# Main Function
+
+import numpy as np
+
+# Inputs (SI units)
+# number of vertices
+nv = 3
+
+# Time step
+dt = 1e-2
+
+# Rod Length
+RodLength = 0.10
+
+# Discrete length
+deltaL = RodLength / (nv - 1)
+
+# Radius of spheres
+R1 = 0.005
+R2 = 0.025
+R3 = 0.005
+
+# Densities
+rho_metal = 7000
+rho_gl = 1000
+rho = rho_metal - rho_gl
+
+# Cross-sectional radius of rod
+r0 = 1e-3
+
+# Young's modulus
+Y = 1e9
+
+# Viscosity
+visc = 1000.0
+
+# Maximum number of iterations in Newton Solver
+maximum_iter = 100
+
+# Total simulation time (it exits after t=totalTime)
+totalTime = 10
+
+# Indicate whether images should be saved
+saveImage = 0
+
+# How often the plot should be saved?
+plotStep = 50
+
+# Utility quantities
+ne = nv - 1
+EI = Y * np.pi * r0**4 / 4
+EA = Y * np.pi * r0**2
+
+# Tolerance on force function
+tol = EI / RodLength**2 * 1e-3  # small enough force that can be neglected
+
+# Geometry of the rod
+nodes = np.zeros((nv, 2))
+for c in range(nv):
+    nodes[c, 0] = c * RodLength / ne
+
+# Compute Mass
+m = np.zeros(2 * nv)
+m[0:2] = 4 / 3 * np.pi * R1**3 * rho_metal
+m[2:4] = 4 / 3 * np.pi * R2**3 * rho_metal
+m[4:6] = 4 / 3 * np.pi * R3**3 * rho_metal
+
+mMat = np.diag(m)  # Convert into a diagonal matrix
+
+# Gravity
+W = np.zeros(2 * nv)
+g = np.array([0, -9.8])  # m/s^2 - gravity
+W[0:2] = 4 / 3 * np.pi * R1**3 * rho * g
+W[2:4] = 4 / 3 * np.pi * R2**3 * rho * g
+W[4:6] = 4 / 3 * np.pi * R3**3 * rho * g
+
+# Viscous damping matrix, C
+C = np.zeros((2 * nv, 2 * nv))
+C1 = 6 * np.pi * visc * R1
+C2 = 6 * np.pi * visc * R2
+C3 = 6 * np.pi * visc * R3
+C[0, 0] = C1
+C[1, 1] = C1
+C[2, 2] = C2
+C[3, 3] = C2
+C[4, 4] = C3
+C[5, 5] = C3
+
+# Initial conditions
+q0 = np.zeros(2 * nv)
+for c in range(nv):
+    q0[2 * c] = nodes[c, 0]
+    q0[2 * c + 1] = nodes[c, 1]
+
+q = q0.copy()
+u = (q - q0) / dt
+###############################
+
+# Number of time steps
+Nsteps = round(totalTime / dt)
+
+ctime = 0
+
+all_pos = np.zeros(Nsteps)
+all_v = np.zeros(Nsteps)
+midAngle = np.zeros(Nsteps)
+
+for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range starts at 1
+    print(f't={ctime:.6f}')
+
+    q, error = objfun(q0, q0, u, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL)
+
+    if error < 0:
+        print('Could not converge. Sorry')
+        break  # Exit the loop if convergence fails
+
+    u = (q - q0) / dt  # velocity
+    ctime += dt  # current time
+
+    # Update q0
+    q0 = q
+
+    """
+    if timeStep % plotStep == 0:
+      x1 = q[::2]  # Selects every second element starting from index 0
+      x2 = q[1::2]  # Selects every second element starting from index 1
+      h1 = plt.figure(1)
+      plt.clf()  # Clear the current figure
+      clear_output(wait=True)  # Clear the previous plot/output: Only for iPython
+      plt.plot(x1, x2, 'ko-')  # 'ko-' indicates black color with circle markers and solid lines
+      plt.title(f't={ctime:.6f}')  # Format the title with the current time
+      plt.axis('equal')  # Set equal scaling
+      plt.xlabel('x [m]')
+      plt.ylabel('y [m]')
+      plt.show()  # Display the figure
+    """
+
+    all_pos[timeStep] = q[3]  # Python uses 0-based indexing
+    all_v[timeStep] = u[3]
+
+    # Angle at the center
+    vec1 = np.array([q[2], q[3], 0]) - np.array([q[0], q[1], 0])
+    vec2 = np.array([q[4], q[5], 0]) - np.array([q[2], q[3], 0])
+    midAngle[timeStep] = np.degrees(np.arctan2(np.linalg.norm(np.cross(vec1, vec2)), np.dot(vec1, vec2)))
+
+# Plot
+plt.figure(2)
+t = np.linspace(0, totalTime, Nsteps)
+plt.plot(t, all_pos)
+plt.xlabel('Time, t [s]')
+plt.ylabel('Displacement, $\\delta$ [m]')
+plt.savefig('fallingBeam.png')
+
+plt.figure(3)
+plt.plot(t, all_v)
+plt.xlabel('Time, t [s]')
+plt.ylabel('Velocity, v [m/s]')
+plt.savefig('fallingBeam_velocity.png')
+
+plt.figure(4)
+plt.plot(t, midAngle, 'r')
+plt.xlabel('Time, t [s]')
+plt.ylabel('Angle, $\\alpha$ [deg]')
+plt.savefig('fallingBeam_angle.png')
+
+plt.show()

@@ -521,7 +521,7 @@ all_v = np.zeros(Nsteps)
 midAngle = np.zeros(Nsteps)
 
 for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range starts at 1
-    print(f't={ctime:.6f}')
+    # print(f't={ctime:.6f}')
 
     q, error = objfun(q0, q0, u, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL)
 
@@ -534,8 +534,7 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
 
     # Update q0
     q0 = q
-
-    """
+    
     if timeStep % plotStep == 0:
       x1 = q[::2]  # Selects every second element starting from index 0
       x2 = q[1::2]  # Selects every second element starting from index 1
@@ -548,7 +547,7 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
       plt.xlabel('x [m]')
       plt.ylabel('y [m]')
       plt.show()  # Display the figure
-    """
+    
 
     all_pos[timeStep] = q[3]  # Python uses 0-based indexing
     all_v[timeStep] = u[3]

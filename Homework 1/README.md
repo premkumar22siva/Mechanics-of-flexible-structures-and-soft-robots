@@ -1,8 +1,4 @@
 # Mechanics-of-flexible-structures-and-soft-robots
-This repository is created to store the source codes and reports of the discrete simulations run for flexible structures.
-
-The source code and report for Assignment 1 can be found inside the folder named 'Homework 1'. 
-
 The code for the three questions is written in Python.
 
 Download the code and run it on any of the following platforms:

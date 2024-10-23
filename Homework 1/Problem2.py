@@ -229,8 +229,8 @@ def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
 ###################################################################
 # COMPUTING THE BENDING FORCE AND THE JACOBIAN OF THE BENDING FORCE
 ###################################################################
-
-"""
+def getFb(q, EI, deltaL):
+    """
     Parameters:
     q : np.ndarray
         A vector of size 6 containing the coordinates [x_{k-1}, y_{k-1}, x_k, y_k, x_{k+1}, y_{k+1}].

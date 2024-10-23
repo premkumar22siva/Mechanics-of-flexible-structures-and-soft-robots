@@ -442,6 +442,10 @@ def objfun_exp(q_old, u_old, dt_exp,
 # Number of vertices
 nv = 3
 
+# Solving Method
+# Getting the user input to choose the method to solve
+method = input('Choose the method to solve the simulation:\n\n Press I for Implicit method\n\n Press E for Explicit method\n\n') 
+
 # Time step
 dt_imp = 1e-2 # For implicit method
 dt_exp = 1e-5 # For explicit method
@@ -535,13 +539,6 @@ if method == "I" or method == "i":
 else:
   u = (q - q0) / dt_exp
 
-# Solving Method
-method = input('Choose the method to solve the simulation:\n\n Press I for Implicit method\n\n Press E for Explicit method\n\n') # Getting the user input to choose the method to solve
-if method == "I" or method == "i":
-  print('\n\nFollowing are the results as per Implicit method\n\n')
-else:
-  print('\n\nFollowing are the results as per Explicit method\n\n')
-
 # Number of time steps
 if method == "I" or method == "i":
   Nsteps = round(totalTime / dt_imp)
@@ -620,7 +617,11 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
     midAngle[timeStep] = np.degrees(np.arctan2(np.linalg.norm(np.cross(vec1, vec2)), np.dot(vec1, vec2)))
 
 # Plot
-
+if method == "I" or method == "i":
+  print('\n\nFollowing are the results as per Implicit method\n\n')
+else:
+  print('\n\nFollowing are the results as per Explicit method\n\n')
+    
 plt.figure(2)
 plt.plot(t0_x1, t0_x2, 'o-', label=('At t=0 s'))
 plt.plot(t1_x1, t1_x2, 'o-', label=('At t=0.01 s'))

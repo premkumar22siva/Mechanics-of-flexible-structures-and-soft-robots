@@ -1,4 +1,4 @@
-# Mechanics-of-flexible-structures-and-soft-robots
+# MAE 263F - Homework 1
 The code for the three questions is written in Python.
 
 Download the code and run it on any of the following platforms:

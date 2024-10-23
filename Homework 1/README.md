@@ -1,5 +1,6 @@
 # MAE 263F - Homework 1
 The code for the three questions is written in Python.
+The Helper functions for the code are taken from the course notes of Prof. M. Khalid Jawed from his lectures for the course: Mechanics of flexible structures and soft robots.
 
 Download the code and run it on any of the following platforms:
   1. Local Development Environment (on your computer)
@@ -31,6 +32,8 @@ Once the program is run, there should be five plots displayed in the following o
   - Velocity of Sphere 2 with respect to time
   - Turning angle at the middle node with respect to time
 
+The case setup and the inferences drawn from the results are summarized in detail in the final report named "Homework1_Sivakumar". 
+
 **Problem 2**
 -
 There is no user input needed to run this code. Just running the program is enough. Once the program is run, there should be seven plots displayed in the following order:
@@ -42,10 +45,14 @@ There is no user input needed to run this code. Just running the program is enou
   - Sensitivity of terminal velocity to time step size (dt)
   - Sensitivity of terminal velocity to number of nodes (N)
 
+The case setup and the inferences drawn from the results are summarized in detail in the final report named "Homework1_Sivakumar".
+
 **Problem 3**
 -
 There is no user input needed to run this code. Just running the program is enough. Once the program is run, there should be seven plots displayed in the following order:
   - Simulation of the deformation of the beam
   - Maximum vertical displacement with respect to time from the simulation and from beam theory
   - Comparison of the maximum deflection from the solver and the predictions from beam theory for different values of external force
+
+The case setup and the inferences drawn from the results are summarized in detail in the final report named "Homework1_Sivakumar".
      

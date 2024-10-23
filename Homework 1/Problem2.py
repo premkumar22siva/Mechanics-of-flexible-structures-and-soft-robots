@@ -1,7 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from IPython.display import clear_output # Only for Python
 
+#################
 # HELPER FUNCTION
+#################
 
 def crossMat(a):
     """
@@ -20,9 +23,10 @@ def crossMat(a):
                   [-a[1], a[0], 0]])
 
     return A
-  ###################################
 
-# GRADIENT OF ELASTIC BENDING ENERGIES
+####################################
+# GRADIENT OF ELASTIC BENDING ENERGY
+####################################
 
 def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -98,9 +102,10 @@ def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     dF = gradKappa * EI * dkappa / l_k
 
     return dF
-#########################################
 
-# HESSIAN OF ELASTIC BENDING ENERGIES
+###################################
+# HESSIAN OF ELASTIC BENDING ENERGY
+###################################
 
 def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -220,14 +225,12 @@ def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     dJ += 1.0 / l_k * dkappa * EI * DDkappa1
 
     return dJ
-#################################
 
-# CALCULATE BENDING FORCE
+###################################################################
+# COMPUTING THE BENDING FORCE AND THE JACOBIAN OF THE BENDING FORCE
+###################################################################
 
-def getFb(q, EI, deltaL):
-    """
-    Compute the bending force and Jacobian of the bending force.
-
+"""
     Parameters:
     q : np.ndarray
         A vector of size 6 containing the coordinates [x_{k-1}, y_{k-1}, x_k, y_k, x_{k+1}, y_{k+1}].
@@ -275,9 +278,10 @@ def getFb(q, EI, deltaL):
         Jb[np.ix_(ind, ind)] = Jb[np.ix_(ind, ind)] - hessEnergy
 
     return Fb, Jb
-#######################################
 
-# GRADIENT OF ELASTIC STRETCHING ENERGIES
+#######################################
+# GRADIENT OF ELASTIC STRETCHING ENERGY
+#######################################
 
 def gradEs(xk, yk, xkp1, ykp1, l_k, EA):
     """
@@ -303,11 +307,10 @@ def gradEs(xk, yk, xkp1, ykp1, l_k, EA):
     F = 0.5 * EA * l_k * F  # Scale by EA and l_k
 
     return F
-#####################################
 
-# HESSIAN OF ELASTIC STRETCHING ENERGIES
-
-import numpy as np
+######################################
+# HESSIAN OF ELASTIC STRETCHING ENERGY
+######################################
 
 def hessEs(xk, yk, xkp1, ykp1, l_k, EA):
     """
@@ -334,9 +337,10 @@ def hessEs(xk, yk, xkp1, ykp1, l_k, EA):
     J *= 0.5 * EA * l_k
 
     return J
-####################################
 
-# CALCULATE STRETCHING FORCE
+#####################################################################
+# COMPUTING THE STRETCHING FORCE AND JACOBIAN OF THE STRETCHING FORCE
+#####################################################################
 
 def getFs(q, EA, deltaL):
     ndof = q.size # number of DOF
@@ -364,9 +368,10 @@ def getFs(q, EA, deltaL):
       Js[np.ix_(ind, ind)] = Js[np.ix_(ind, ind)] - hessEnergy
 
     return Fs, Js
-######################################
 
-# OBJECTIVE FUNCTION (NEWTON-RAPHSON SCHEME)
+######################################
+# OBJECTIVE FUNCTION (IMPLICIT METHOD)
+######################################
 
 def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
            m, mMat,  # inertia
@@ -377,9 +382,9 @@ def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
     q_new = q_guess.copy()
 
     # Newton-Raphson scheme
-    iter_count = 0  # number of iterations
+    iter_count = 0    # number of iterations
     error = tol * 10  # norm of function value (initialized to a value higher than tolerance)
-    flag = 1  # Start with a 'good' simulation (flag=1 means no error)
+    flag = 1          # Start with a 'good' simulation (flag=1 means no error)
 
     while error > tol:
         # Get elastic forces
@@ -411,15 +416,15 @@ def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
             return q_new, flag
 
     return q_new, flag
-#############################################
 
+##################
 # MAIN FUNCTION
+##################
 
-import numpy as np
+# All inputs are in SI units
 
-# Inputs (SI units)
-# number of vertices
-nv = 21 # Odd vs even number should show different behavior
+# Number of vertices
+nv = 21 # Odd vs even number shows different behavior
 ndof = 2*nv
 
 # Time step
@@ -433,7 +438,7 @@ deltaL = RodLength / (nv - 1)
 
 # Radius of spheres
 R = np.zeros(nv)  # Vector of size N - Radius of N nodes
-R[:] = 0.005 # deltaL / 10: Course note uses deltaL/10
+R[:] = deltaL/10
 midNode = int((nv + 1) / 2)
 R[midNode -1 ] = 0.025
 
@@ -486,7 +491,7 @@ mMat = np.diag(m)  # Convert into a diagonal matrix
 
 # Gravity
 W = np.zeros(ndof)
-g = np.array([0, -9.8])  # m/s^2 - gravity
+g = np.array([0, -9.8])    # m/s^2 - gravity
 for k in range(nv):
   W[2*k]   = m[2*k] * g[0] # Weight for x_k
   W[2*k+1] = m[2*k] * g[1] # Weight for y_k
@@ -505,7 +510,6 @@ for c in range(nv):
 
 q = q0.copy()
 u = (q - q0) / dt
-######################################
 
 # Number of time steps
 Nsteps = round(totalTime / dt)
@@ -517,7 +521,6 @@ all_v = np.zeros(Nsteps)
 midAngle = np.zeros(Nsteps)
 
 for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range starts at 1
-    #print(f't={ctime:.6f}')
 
     q, error = objfun(q0, q0, u, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL)
 
@@ -531,7 +534,7 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
     # Update q0
     q0 = q
 
-
+    # Simulation of the falling beam
     if timeStep % plotStep == 0:
       x1 = q[::2]  # Selects every second element starting from index 0
       x2 = q[1::2]  # Selects every second element starting from index 1
@@ -539,13 +542,13 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
       plt.clf()  # Clear the current figure
       clear_output(wait=True)  # Clear the previous plot/output: Only for iPython
       plt.plot(x1, x2, 'ko-')  # 'ko-' indicates black color with circle markers and solid lines
-      plt.title(f't={ctime:.6f}')  # Format the title with the current time
+      plt.title('Shape of the structure at ' + f't={ctime:.3f}')  # Format the title with the current time
       plt.axis('equal')  # Set equal scaling
       plt.xlabel('x [m]')
       plt.ylabel('y [m]')
-      plt.show()  # Display the figure
+      plt.show() # Display the figure
 
-
+    #Storing the positing and velocity of the middle node at each timestep
     all_pos[timeStep] = q[2*midNode-1]  # Python uses 0-based indexing
     all_v[timeStep] = u[2*midNode-1]
 
@@ -555,23 +558,64 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
     midAngle[timeStep] = np.degrees(np.arctan2(np.linalg.norm(np.cross(vec1, vec2)), np.dot(vec1, vec2)))
 
 # Plot
+
+# Plotting the final shape of the structure
 plt.figure(2)
 t = np.linspace(0, totalTime, Nsteps)
+plt.plot(q[::2], q[1::2], 'ko-')
+plt.title('Final Shape of the structure')
+plt.axis('equal')
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+plt.savefig('fallingBeam_finalShape.png')
+
+# Plotting the displacement of the middle node
+plt.figure(3)
 plt.plot(t, all_pos)
+plt.title('Displacement of Middle Node with time')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Displacement, $\\delta$ [m]')
 plt.savefig('fallingBeam.png')
 
-plt.figure(3)
+# Plotting the velocity of the middle node
+plt.figure(4)
+v_term = all_v[len(all_v)-1]
 plt.plot(t, all_v)
+plt.plot(totalTime, v_term, 'ko')
+plt.text(totalTime, v_term + 0.0002, 'Terminal Velocity: ' + "{:.7f}".format(v_term), ha='right', va='bottom')
+plt.title('Velocity of Middle Node with time')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Velocity, v [m/s]')
 plt.savefig('fallingBeam_velocity.png')
 
-plt.figure(4)
+# Plotting the angle at the middle node
+plt.figure(5)
 plt.plot(t, midAngle, 'r')
+plt.title('Angle at the Middle Node with time')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Angle, $\\alpha$ [deg]')
 plt.savefig('fallingBeam_angle.png')
+
+# Sensitivity of terminal velocity to dt
+# The terminal velocities for different dt were calculated through prior runs of the program
+deltaT = np.logspace(-3, 1, 9, endpoint=True)
+plt.figure(6)
+v_term_dt = np.zeros(9)
+v_term_dt = np.array([-0.0068066, -0.0068066, -0.0068066, -0.0068066, -0.0068066, -0.0068066, -0.0068066, -0.0068066, -0.0068068])
+plt.plot(deltaT, v_term_dt, 'bo-')
+plt.xscale('log')
+plt.title('Sensitivity of terminal velocity to dt')
+plt.xlabel('Time step (log scale), dt')
+plt.ylabel('Terminal velocity [m/s]')
+
+# Sensitivity of terminal velocity to number of nodes for dt = 1e-1
+# The terminal velocities for different number of nodes were calculated through prior runs of the program
+plt.figure(7)
+no_nodes = np.array([11, 13, 15, 17, 19, 21, 23, 25, 27])
+v_term_nodes = np.array([-0.0068099, -0.0068086, -0.0068078, -0.0068073, -0.0068069, -0.0068066, -0.0068065, -0.0068063, -0.0068062])
+plt.plot(no_nodes, v_term_nodes, 'ro-')
+plt.title('Sensitivity of terminal velocity to number of nodes for dt = 1e-1')
+plt.xlabel('Number of nodes')
+plt.ylabel('Terminal velocity [m/s]')
 
 plt.show()

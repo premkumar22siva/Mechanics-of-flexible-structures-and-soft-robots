@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math as math
+from IPython.display import clear_output # Only for Python
 
-# Helper Function
+##############################
+# HELPER FUNCTION
+##############################
 
 def crossMat(a):
     """
@@ -20,9 +24,10 @@ def crossMat(a):
                   [-a[1], a[0], 0]])
 
     return A
-######################################
 
-# Gradient of Elastic Bending Energies
+####################################
+# GRADIENT OF ELASTIC BENDING ENERGY
+####################################
 
 def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -99,7 +104,9 @@ def gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
 
     return dF
 
-# Hessian of Elastic Bending Energies
+###################################
+# HESSIAN OF ELASTIC BENDING ENERGY
+###################################
 
 def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
     """
@@ -220,12 +227,12 @@ def hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, curvature0, l_k, EI):
 
     return dJ
 
-# Calculate Bending Force
+#######################################################
+# COMPUTING BENDING FORCE AND JACOBIAN OF BENDING FORCE
+#######################################################
 
 def getFb(q, EI, deltaL):
     """
-    Compute the bending force and Jacobian of the bending force.
-
     Parameters:
     q : np.ndarray
         A vector of size 6 containing the coordinates [x_{k-1}, y_{k-1}, x_k, y_k, x_{k+1}, y_{k+1}].
@@ -264,7 +271,9 @@ def getFb(q, EI, deltaL):
 
     return Fb, Jb
 
-# Gradient of Elastic Stretching Energies
+#######################################
+# GRADIENT OF ELASTIC STRETCHING ENERGY
+#######################################
 
 def gradEs(xk, yk, xkp1, ykp1, l_k, EA):
     """
@@ -290,9 +299,10 @@ def gradEs(xk, yk, xkp1, ykp1, l_k, EA):
     F = 0.5 * EA * l_k * F  # Scale by EA and l_k
 
     return F
-#######################################
 
-# Hessian of Elastic Stretching Energies
+######################################
+# HESSIAN OF ELASTIC STRETCHING ENERGY
+######################################
 
 def hessEs(xk, yk, xkp1, ykp1, l_k, EA):
     """
@@ -319,9 +329,10 @@ def hessEs(xk, yk, xkp1, ykp1, l_k, EA):
     J *= 0.5 * EA * l_k
 
     return J
-######################################
 
-# Calculate Stretching Force
+#############################################################
+# COMPUTING STRETCHING FORCE AND JACOBIAN OF STRETCHING FORCE
+#############################################################
 
 def getFs(q, EA, deltaL):
     Fs = np.zeros_like(q)  # force
@@ -352,23 +363,12 @@ def getFs(q, EA, deltaL):
     Js[2:6, 2:6] -= hessEnergy
 
     return Fs, Js
-####################################
 
-EA = 3.1416e+03
-deltaL = 0.05
-xk = 0.0062
-yk = -0.0420
-xkp1 = 0.0500
-ykp1 = -0.0661
-gradEnergy = gradEs(xk, yk, xkp1, ykp1, deltaL, EA)
-hessEnergy = hessEs(xk, yk, xkp1, ykp1, deltaL, EA)
-print(gradEnergy)
-print(hessEnergy)
-####################################
+######################################
+# OBJECTIVE FUNCTION (IMPLICIT METHOD)
+######################################
 
-# OBJECTIVE FUNCTION (NEWTON-RAPHSON SCHEME)
-
-def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
+def objfun_imp(q_guess, q_old, u_old, dt_imp, tol, maximum_iter,
            m, mMat,  # inertia
            EI, EA,   # elastic stiffness
            W, C,     # external force
@@ -377,9 +377,9 @@ def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
     q_new = q_guess.copy()
 
     # Newton-Raphson scheme
-    iter_count = 0  # number of iterations
+    iter_count = 0    # number of iterations
     error = tol * 10  # norm of function value (initialized to a value higher than tolerance)
-    flag = 1  # Start with a 'good' simulation (flag=1 means no error)
+    flag = 1          # Start with a 'good' simulation (flag=1 means no error)
 
     while error > tol:
         # Get elastic forces
@@ -387,14 +387,14 @@ def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
         Fs, Js = getFs(q_new, EA, deltaL)
 
         # Viscous force
-        Fv = -C @ (q_new - q_old) / dt
-        Jv = -C / dt
+        Fv = -C @ (q_new - q_old) / dt_imp
+        Jv = -C / dt_imp
 
         # Equation of motion
-        f = m * (q_new - q_old) / dt**2 - m * u_old / dt - (Fb + Fs + W + Fv)
+        f = m * (q_new - q_old) / dt_imp**2 - m * u_old / dt_imp - (Fb + Fs + W + Fv)
 
         # Manipulate the Jacobians
-        J = mMat / dt**2 - (Jb + Js + Jv)
+        J = mMat / dt_imp**2 - (Jb + Js + Jv)
 
         # Newton's update
         q_new = q_new - np.linalg.solve(J, f)
@@ -404,25 +404,47 @@ def objfun(q_guess, q_old, u_old, dt, tol, maximum_iter,
 
         # Update iteration number
         iter_count += 1
-        print(f'Iter={iter_count-1}, error={error:.6e}')
 
         if iter_count > maximum_iter:
             flag = -1  # return with an error signal
             return q_new, flag
 
     return q_new, flag
-####################################
 
-# Main Function
+######################################
+# OBJECTIVE FUNCTION (EXPLICIT METHOD)
+######################################
 
-import numpy as np
+def objfun_exp(q_old, u_old, dt_exp,
+           m,        # inertia
+           EI, EA,   # elastic stiffness
+           W, C,     # external force
+           deltaL):
 
-# Inputs (SI units)
-# number of vertices
+    # Get elastic forces
+    Fb, Jb = getFb(q_old, EI, deltaL)
+    Fs, Js = getFs(q_old, EA, deltaL)
+
+    # Viscous force
+    Fv = -C @ (u_old)
+
+    # Calculate q_new algebraically
+    q_new = q_old + dt_exp*u_old + dt_exp**2 * (Fb + Fs + W + Fv)/ m
+
+    return q_new
+
+#################
+# MAIN FUNCTION
+#################
+
+# All Inputs are in SI units
+
+# Number of vertices
 nv = 3
 
 # Time step
-dt = 1e-2
+dt_imp = 1e-2 # For implicit method
+dt_exp = 1e-5 # For explicit method
 
 # Rod Length
 RodLength = 0.10
@@ -462,9 +484,9 @@ saveImage = 0
 plotStep = 50
 
 # Utility quantities
-ne = nv - 1
-EI = Y * np.pi * r0**4 / 4
-EA = Y * np.pi * r0**2
+ne = nv - 1                # Number of edges
+EI = Y * np.pi * r0**4 / 4 # Bending Stiffness
+EA = Y * np.pi * r0**2     # Stretching Stiffness
 
 # Tolerance on force function
 tol = EI / RodLength**2 * 1e-3  # small enough force that can be neglected
@@ -508,11 +530,23 @@ for c in range(nv):
     q0[2 * c + 1] = nodes[c, 1]
 
 q = q0.copy()
-u = (q - q0) / dt
-###############################
+if method == "I" or method == "i":
+  u = (q - q0) / dt_imp
+else:
+  u = (q - q0) / dt_exp
+
+# Solving Method
+method = input('Choose the method to solve the simulation:\n\n Press I for Implicit method\n\n Press E for Explicit method\n\n') # Getting the user input to choose the method to solve
+if method == "I" or method == "i":
+  print('\n\nFollowing are the results as per Implicit method\n\n')
+else:
+  print('\n\nFollowing are the results as per Explicit method\n\n')
 
 # Number of time steps
-Nsteps = round(totalTime / dt)
+if method == "I" or method == "i":
+  Nsteps = round(totalTime / dt_imp)
+else:
+  Nsteps = round(totalTime / dt_exp)
 
 ctime = 0
 
@@ -520,21 +554,49 @@ all_pos = np.zeros(Nsteps)
 all_v = np.zeros(Nsteps)
 midAngle = np.zeros(Nsteps)
 
+t0_x1= q[::2]  # Storing the x coordinates at time = 0
+t0_x2= q[1::2]  # Storing the y coordinates at time = 0
+
 for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range starts at 1
-    # print(f't={ctime:.6f}')
 
-    q, error = objfun(q0, q0, u, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL)
+    if method == 'I' or method == 'i':
+      q, error = objfun_imp(q0, q0, u, dt_imp, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL)
 
-    if error < 0:
+      if error < 0:
         print('Could not converge. Sorry')
         break  # Exit the loop if convergence fails
 
-    u = (q - q0) / dt  # velocity
-    ctime += dt  # current time
+      u = (q - q0) / dt_imp  # Update velocity
+      ctime += dt_imp  # current time
+
+    else:
+      q = objfun_exp(q0, u, dt_exp, m, EI, EA, W, C, deltaL)
+
+      u = (q - q0) / dt_exp  # Update velocity
+      ctime += dt_exp  # current time
 
     # Update q0
     q0 = q
-    
+
+    # Storing the DOFs at t = {0, 0.01, 0.05, 0.1, 1.0, 10}
+    if ctime == 0.01:
+      t1_x1= q[::2]  # Selects every second element starting from index 0
+      t1_x2= q[1::2]  # Selects every second element starting from index 1
+    elif ctime == 0.05:
+      t2_x1= q[::2]  # Selects every second element starting from index 0
+      t2_x2= q[1::2]  # Selects every second element starting from index 1
+    elif math.isclose(ctime,0.1):
+      t3_x1= q[::2]  # Selects every second element starting from index 0
+      t3_x2= q[1::2]  # Selects every second element starting from index 1
+    elif math.isclose(ctime,1.0):
+      t4_x1= q[::2]  # Selects every second element starting from index 0
+      t4_x2= q[1::2]  # Selects every second element starting from index
+    elif math.isclose(ctime,9.99):
+      t5_x1= q[::2]  # Selects every second element starting from index 0
+      t5_x2= q[1::2]  # Selects every second element starting from index 1
+
+
+    # Simulation of the falling beam
     if timeStep % plotStep == 0:
       x1 = q[::2]  # Selects every second element starting from index 0
       x2 = q[1::2]  # Selects every second element starting from index 1
@@ -547,10 +609,10 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
       plt.xlabel('x [m]')
       plt.ylabel('y [m]')
       plt.show()  # Display the figure
-    
 
-    all_pos[timeStep] = q[3]  # Python uses 0-based indexing
-    all_v[timeStep] = u[3]
+    # Store the position and velocity of Sphere 2
+    all_pos[timeStep] = q[3]  # Position of R2 (Python uses 0-based indexing)
+    all_v[timeStep] = u[3] # Velocity of R2 (Python uses 0-based indexing)
 
     # Angle at the center
     vec1 = np.array([q[2], q[3], 0]) - np.array([q[0], q[1], 0])
@@ -558,21 +620,41 @@ for timeStep in range(1, Nsteps):  # Python uses 0-based indexing, hence range s
     midAngle[timeStep] = np.degrees(np.arctan2(np.linalg.norm(np.cross(vec1, vec2)), np.dot(vec1, vec2)))
 
 # Plot
+
 plt.figure(2)
+plt.plot(t0_x1, t0_x2, 'o-', label=('At t=0 s'))
+plt.plot(t1_x1, t1_x2, 'o-', label=('At t=0.01 s'))
+plt.plot(t2_x1, t2_x2, 'o-', label=('At t=0.05 s'))
+plt.plot(t3_x1, t3_x2, 'o-', label=('At t=0.1 s'))
+plt.plot(t4_x1, t4_x2, 'o-', label=('At t=1.0 s'))
+plt.plot(t5_x1, t5_x2, 'o-', label=('At t=10 s'))
+plt.title('Shape of the Structure with time')
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+plt.legend(loc='upper right') # Add legend
+plt.savefig('shapeofthestructure.png')
+
+plt.figure(3)
 t = np.linspace(0, totalTime, Nsteps)
 plt.plot(t, all_pos)
+plt.title('Displacement of R2 with Time')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Displacement, $\\delta$ [m]')
 plt.savefig('fallingBeam.png')
 
-plt.figure(3)
+plt.figure(4)
+v_term = all_v[len(all_v)-1]
 plt.plot(t, all_v)
+plt.plot(totalTime, v_term, 'ko')
+plt.text(totalTime, v_term + 0.0003, 'Terminal Velocity: ' + "{:.4f}".format(v_term), ha='right', va='bottom')
+plt.title('Velocity of R2 with Time')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Velocity, v [m/s]')
 plt.savefig('fallingBeam_velocity.png')
 
-plt.figure(4)
+plt.figure(5)
 plt.plot(t, midAngle, 'r')
+plt.title('Angle at the Middle Node')
 plt.xlabel('Time, t [s]')
 plt.ylabel('Angle, $\\alpha$ [deg]')
 plt.savefig('fallingBeam_angle.png')

@@ -1,5 +1,5 @@
 #################
-LOAD LIBRARIES
+# LOAD LIBRARIES
 #################
 
 !pip install import-ipynb --quiet
@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from IPython.display import clear_output
 
-#####################
-SIGNED ANGLE FUNCTION
-#####################
+#######################
+# SIGNED ANGLE FUNCTION
+#######################
 
 def signedAngle(u = None,v = None,n = None):
     # This function calculates the signed angle between two vectors, "u" and "v",
@@ -24,9 +24,9 @@ def signedAngle(u = None,v = None,n = None):
 
     return angle
 
-##########################
-ROTATE AXIS ANGEL FUNCTION
-##########################
+############################
+# ROTATE AXIS ANGEL FUNCTION
+############################
 
 def rotateAxisAngle(v = None,z = None,theta = None):
     # This function rotates a vector "v" around a specified axis "z" by an angle "theta".
@@ -40,9 +40,9 @@ def rotateAxisAngle(v = None,z = None,theta = None):
 
     return vNew
 
-###########################
-PARALLEL TRANSPORT FUNCTION
-###########################
+#############################
+# PARALLEL TRANSPORT FUNCTION
+#############################
 
 def parallel_transport(u = None,t1 = None,t2 = None):
 
@@ -69,17 +69,17 @@ def parallel_transport(u = None,t1 = None,t2 = None):
 
     return d
 
-###############
-HELPER FUNCTION
-###############
+#################
+# HELPER FUNCTION
+#################
 
 def crossMat(a):
     A=np.matrix([[0,- a[2],a[1]],[a[2],0,- a[0]],[- a[1],a[0],0]])
     return A
 
-###########################
-FUNCTION TO COMPUTE TANGENT
-###########################
+#############################
+# FUNCTION TO COMPUTE TANGENT
+#############################
 
 def computeTangent(q):
   ne = int((len(q)+1)/4 - 1) 
@@ -89,9 +89,9 @@ def computeTangent(q):
     tangent[c,:] = dx / np.linalg.norm(dx) 
   return tangent
 
-############################################
-FUNCTION TO COMPUTE SPACE PARALLEL TRANSPORT
-############################################
+##############################################
+# FUNCTION TO COMPUTE SPACE PARALLEL TRANSPORT
+##############################################
 
 def computeSpaceParallel(d1_first, q):
   ne = int((len(q)+1)/4 - 1) 
@@ -120,9 +120,9 @@ def computeSpaceParallel(d1_first, q):
     t0 = t.copy() # New tangent now becomes old tangent
   return d1, d2
 
-##################################
-FUNCTION TO COMPUTE MATERIAL FRAME
-##################################
+####################################
+# FUNCTION TO COMPUTE MATERIAL FRAME
+####################################
 
 def computeMaterialFrame(a1, a2, theta):
   ne = len(theta)
@@ -133,9 +133,9 @@ def computeMaterialFrame(a1, a2, theta):
     m2[c,:] = - a1[c,:] * np.sin(theta[c]) + a2[c,:] * np.cos(theta[c])
   return m1, m2
 
-###########################################
-FUNCTION TO COMPUTE TIME PARALLEL TRANSPORT
-###########################################
+#############################################
+# FUNCTION TO COMPUTE TIME PARALLEL TRANSPORT
+#############################################
 
 def computeTimeParallel(a1_old, q0, q):
   # a1_old is (ne,3) ndarray representing old reference frame
@@ -157,9 +157,9 @@ def computeTimeParallel(a1_old, q0, q):
 
   return a1, a2
 
-#####################################
-FUNCTION TO CALCULATE REFERENCE TWIST
-#####################################
+#######################################
+# FUNCTION TO CALCULATE REFERENCE TWIST
+#######################################
 
 def computeReferenceTwist(u1, u2, t1, t2, refTwist = None):
     # This function computes the reference twist angle between two vectors "u1" and "u2",
@@ -173,9 +173,9 @@ def computeReferenceTwist(u1, u2, t1, t2, refTwist = None):
     refTwist = refTwist + signedAngle(ut, u2, t2)
     return refTwist
 
-###############################
-FUNCTION TO CALCULATE CURVATURE
-###############################
+#################################
+# FUNCTION TO CALCULATE CURVATURE
+#################################
 
 def computekappa(node0, node1, node2, m1e, m2e, m1f, m2f):
     # This function computes the curvature "kappa" at a "turning" node in a discrete elastic rod model.
@@ -195,9 +195,9 @@ def computekappa(node0, node1, node2, m1e, m2e, m1f, m2f):
 
     return kappa
 
-##############################################
-FUNCTION TO GET THE CALCULATED REFERENCE TWIST
-##############################################
+################################################
+# FUNCTION TO GET THE CALCULATED REFERENCE TWIST
+################################################
 
 def getRefTwist(a1, tangent, refTwist):
   ne = a1.shape[0] # Shape of a1 is (ne,3) - returns number of rows in a1 which is ne
@@ -209,9 +209,9 @@ def getRefTwist(a1, tangent, refTwist):
     refTwist[c] = computeReferenceTwist(u0, u1, t0, t1, refTwist[c])
   return refTwist
 
-########################################
-FUNCTION TO GET THE CALCULATED CURVATURE
-########################################
+##########################################
+# FUNCTION TO GET THE CALCULATED CURVATURE
+##########################################
 
 def getKappa(q0, m1, m2):
   ne = m1.shape[0] # Shape of m1 is (ne,3)
@@ -237,9 +237,9 @@ def getKappa(q0, m1, m2):
 
   return kappa
 
-###################################################
-GRADIENT AND HESSIAN OF ELASTIC STRETCHING ENERGIES
-###################################################
+#####################################################
+# GRADIENT AND HESSIAN OF ELASTIC STRETCHING ENERGIES
+#####################################################
 
 def gradEs_hessEs(node0 = None,node1 = None,l_k = None,EA = None):
 
@@ -276,9 +276,9 @@ def gradEs_hessEs(node0 = None,node1 = None,l_k = None,EA = None):
     dJ[3:6,0:3] = - M
     return dF,dJ
 
-################################################
-GRADIENT AND HESSIAN OF ELASTIC BENDING ENERGIES
-################################################
+##################################################
+# GRADIENT AND HESSIAN OF ELASTIC BENDING ENERGIES
+##################################################
 
 def gradEb_hessEb(node0 = None,node1 = None,node2 = None,m1e = None,m2e = None,m1f = None,m2f = None,kappaBar = None,l_k = None, EI1 = None, EI2 = None):
 
@@ -498,9 +498,9 @@ def gradEb_hessEb(node0 = None,node1 = None,node2 = None,m1e = None,m2e = None,m
 
     return dF,dJ
 
-#################################################
-GRADIENT AND HESSIAN OF ELASTIC TWISTING ENERGIES
-#################################################
+###################################################
+# GRADIENT AND HESSIAN OF ELASTIC TWISTING ENERGIES
+###################################################
 
 def gradEt_hessEt(node0 = None,node1 = None,node2 = None,theta_e = None,
     theta_f = None,refTwist = None,twistBar = None,l_k = None,GJ = None):
@@ -585,9 +585,9 @@ def gradEt_hessEt(node0 = None,node1 = None,node2 = None,theta_e = None,
     dJ = dE_dTau * DDtwist + d2E_dTau2 * gradTwist_o_gradTwist
     return dF,dJ
 
-######################################
-FUNCTION TO EVALUATE STRETCHING FORCES
-######################################
+########################################
+# FUNCTION TO EVALUATE STRETCHING FORCES
+########################################
 
 def getFs(q, EA, refLen):
   ndof = len(q)
@@ -611,9 +611,9 @@ def getFs(q, EA, refLen):
 
   return Fs, Js
 
-###################################
-FUNCTION TO EVALUATE BENDING FORCES
-###################################
+#####################################
+# FUNCTION TO EVALUATE BENDING FORCES
+#####################################
 
 def getFb(q, m1, m2, kappaBar, EI, voronoiRefLen):
   ndof = len(q)
@@ -644,9 +644,9 @@ def getFb(q, m1, m2, kappaBar, EI, voronoiRefLen):
 
   return Fb, Jb
 
-##############################################
-FUNCTION TO EVALUATE ELASTIC TWISTING ENERGIES
-##############################################
+################################################
+# FUNCTION TO EVALUATE ELASTIC TWISTING ENERGIES
+################################################
 
 def getFt(q, refTwist, twistBar, GJ, voronoiRefLen):
   ndof = len(q)
@@ -677,9 +677,9 @@ def getFt(q, refTwist, twistBar, GJ, voronoiRefLen):
 
   return Ft, Jt
 
-##########################################
-FUNCTION TO SET EQUAL AXES TO PLOT THE ROD
-##########################################
+############################################
+# FUNCTION TO SET EQUAL AXES TO PLOT THE ROD
+############################################
 
 # Function to set equal aspect ratio for 3D plots
 def set_axes_equal(ax):
@@ -706,9 +706,9 @@ def set_axes_equal(ax):
     ax.set_ylim3d([y_middle - max_range / 2, y_middle + max_range / 2])
     ax.set_zlim3d([z_middle - max_range / 2, z_middle + max_range / 2])
 
-########################
-FUNCTION TO PLOT THE ROD
-########################
+##########################
+# FUNCTION TO PLOT THE ROD
+##########################
 
 def plotrod(q, a1, a2, m1, m2, ctime):
     """
@@ -782,9 +782,9 @@ def plotrod(q, a1, a2, m1, m2, ctime):
     plt.draw()  # Force a redraw of the figure
     plt.show()
 
-###########################
-FUNCTION TO PLOT ROD SIMPLE
-###########################
+#############################
+# FUNCTION TO PLOT ROD SIMPLE
+#############################
 
 def plotrod_simple(q, ctime):
     """
@@ -824,9 +824,9 @@ def plotrod_simple(q, ctime):
 
     plt.show()
 
-###########################################
-OBJECTIVE FUNCTION -(NEWTON-RAPHSON SCHEME)
-###########################################
+#############################################
+# OBJECTIVE FUNCTION -(NEWTON-RAPHSON SCHEME)
+#############################################
 
 def objfun(qGuess, q0, u, a1, a2,
            freeIndex, # Boundary conditions
@@ -879,9 +879,9 @@ def objfun(qGuess, q0, u, a1, a2,
 
   return q, u, a1Iterate, a2Iterate
 
-#############
-MAIN FUNCTION
-#############
+###############
+# MAIN FUNCTION
+###############
 
 nv = 20 # nodes (need sensitivity analysis)
 ne = nv - 1 # edges

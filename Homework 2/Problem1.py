@@ -25,7 +25,7 @@ def signedAngle(u = None,v = None,n = None):
     return angle
 
 ############################
-# ROTATE AXIS ANGEL FUNCTION
+# ROTATE AXIS ANGLE FUNCTION
 ############################
 
 def rotateAxisAngle(v = None,z = None,theta = None):
@@ -105,7 +105,7 @@ def computeSpaceParallel(d1_first, q):
   t0 = tangent[0,:] # Tangent on first edge
   d2[0,:] = np.cross(t0, d1_first)
 
-  # Parallel transport from previous edge to the next
+  # Parallel transport from the previous edge to the next
   for c in range(1, ne):
     t = tangent[c,:]
     d1_first = parallel_transport(d1_first, t0, t) 
@@ -139,8 +139,8 @@ def computeMaterialFrame(a1, a2, theta):
 
 def computeTimeParallel(a1_old, q0, q):
   # a1_old is (ne,3) ndarray representing old reference frame
-  # q0 is the old DOF vector from where reference frame should be transported
-  # q is the new DOF vector where reference frame should be transported to
+  # q0 is the old DOF vector from where the reference frame should be transported
+  # q is the new DOF vector where the reference frame should be transported to
   ne = int((len(q)+1)/4 - 1)
   tangent0 = computeTangent(q0) # Old tangents
   tangent = computeTangent(q) # New tangents
@@ -200,7 +200,7 @@ def computekappa(node0, node1, node2, m1e, m2e, m1f, m2f):
 ################################################
 
 def getRefTwist(a1, tangent, refTwist):
-  ne = a1.shape[0] # Shape of a1 is (ne,3) - returns number of rows in a1 which is ne
+  ne = a1.shape[0] # Shape of a1 is (ne,3) - returns the number of rows in a1 which is ne
   for c in np.arange(1,ne):
     u0 = a1[c-1,0:3] # reference frame vector of previous edge
     u1 = a1[c,0:3] # reference frame vector of current edge
@@ -644,9 +644,9 @@ def getFb(q, m1, m2, kappaBar, EI, voronoiRefLen):
 
   return Fb, Jb
 
-################################################
-# FUNCTION TO EVALUATE ELASTIC TWISTING ENERGIES
-################################################
+######################################
+# FUNCTION TO EVALUATE TWISTING FORCES
+######################################
 
 def getFt(q, refTwist, twistBar, GJ, voronoiRefLen):
   ndof = len(q)
@@ -824,9 +824,9 @@ def plotrod_simple(q, ctime):
 
     plt.show()
 
-#############################################
-# OBJECTIVE FUNCTION -(NEWTON-RAPHSON SCHEME)
-#############################################
+############################################
+# OBJECTIVE FUNCTION - NEWTON-RAPHSON SCHEME
+############################################
 
 def objfun(qGuess, q0, u, a1, a2,
            freeIndex, # Boundary conditions
@@ -883,7 +883,7 @@ def objfun(qGuess, q0, u, a1, a2,
 # MAIN FUNCTION
 ###############
 
-nv = 20 # nodes (need sensitivity analysis)
+nv = 20 # nodes 
 ne = nv - 1 # edges
 ndof = 4 * nv - 1 # degrees of freedom: 3*nv + ne
 
@@ -907,7 +907,6 @@ else: # rod with circular shape (ring)
 
 # Material parameters
 Y = 10e6 # Pascals
-#nu = 0.5 # Poisson's raio
 G = Y / 3 # shear modulus (corresponding to an incompressible material)
 
 # Stiffness parameters
@@ -917,7 +916,7 @@ EA = Y * np.pi * r0**2     # Stretching stiffness
 
 # Time Stepping parameters
 totalTime = 5 # second
-dt = 0.01 # second (may need sensitivity analysis)
+dt = 0.01 # second 
 
 # Tolerance
 tol = EI / RodLength**2 * 1e-3

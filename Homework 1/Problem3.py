@@ -445,7 +445,6 @@ outerR= 0.013 # Outer radius
 r0 = 0.011    # Inner radius
 
 # Material Properties
-Y = 1e9                               # Young's Modulus
 E = 70e9                              # Modulus of Elasticity
 I = (np.pi * (outerR**4 - r0**4)) / 4 # Moment of Inertia of the cross-section
 rho_metal = 2700                      # Density of Aluminium
@@ -459,13 +458,13 @@ totalTime = 1
 # Indicate whether images should be saved
 saveImage = 0
 
-# How often the plot should be saved?
+# How often should the plot be saved?
 plotStep = 10
 
 # Utility quantities
 ne = nv - 1
 EI = E * I
-EA = Y * np.pi * r0**2
+EA = E * np.pi * (outerR**2 - r0**2)
 
 # Tolerance on force function
 tol = EI / RodLength**2 * 1e-3  # small enough force that can be neglected
@@ -560,7 +559,7 @@ plt.savefig('Maximum Vertical Displacement Y_max.png')
 # Comparing the Maximum displacement from the numerical solver against the calculated value from Euler Bernoulli theory for different applied forces
 plt.figure(3)
 Ext_force = np.array([2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000])
-Y_max_sim = np.array([-0.03881, -0.05761, -0.07574, -0.09304, -0.10941, -0.12479, -0.13916, -0.15252, -0.16492, -0.21426, -0.24790])
+Y_max_sim = np.array([-0.03879, -0.05753, -0.07555, -0.09269, -0.10884, -0.12394, -0.13798, -0.15097, -0.16296, -0.20989, -0.24091])
 Y_max_Euler = np.array([-0.03804, -0.05707, -0.07609, -0.09511, -0.11413, -0.13316, -0.15218, -0.17120, -0.19022, -0.28534, -0.38045])
 plt.plot(Ext_force, Y_max_sim, 'bo-', label='Simulated Y-max at steady state')
 plt.plot(Ext_force, Y_max_Euler, 'ro-', label='Euler-Bernoulli Y-max')

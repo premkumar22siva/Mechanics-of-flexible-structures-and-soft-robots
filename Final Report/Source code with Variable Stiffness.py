@@ -1294,7 +1294,7 @@ for timeStep in range(Nsteps):
   endY[timeStep] = q[-2]
 
   if timeStep % 10 == 0:
-    plotrod_simple(q, time)
+    plotrod_simple(q, ctime)
 
 # FINGER 2
 
@@ -1358,7 +1358,7 @@ for timeStep in range(Nsteps):
 
     # Every 100 time steps, update material directors and plot the rod
   if timeStep % 10 == 0:
-    plotrod_simple(q, time)
+    plotrod_simple(q, ctime)
 
 # FINGER 3
 
@@ -1421,7 +1421,7 @@ for timeStep in range(Nsteps):
   rod_positions_3.append(pos.copy())
 
   if timeStep % 10 == 0:
-    plotrod_simple(q, time)
+    plotrod_simple(q, ctime)
 
 ######################
 # PLOTTING THE GRIPPER
